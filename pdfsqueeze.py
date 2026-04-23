@@ -13,8 +13,9 @@ import fitz  # PyMuPDF
 
 A4_W = 595.28  # points
 A4_H = 841.89  # points
-MARGIN = 8  # points (~3mm)
-GAP = 4  # points between tiles
+MARGIN = 0  # no margins — use full page
+GAP = 0  # no gaps between tiles
+RENDER_DPI = 300  # render source pages at this DPI for crisp text
 
 
 def load_pages(input_paths):
@@ -139,7 +140,12 @@ def squeeze(input_paths, output_path, max_sheets):
                 offset_x + rendered_w, offset_y + rendered_h
             )
 
-            out_page.show_pdf_page(target_rect, src_doc, src_page_idx)
+            # Render at high DPI for crisp readable text
+            zoom = RENDER_DPI / 72
+            mat = fitz.Matrix(zoom, zoom)
+            pix = src_page.get_pixmap(matrix=mat, alpha=False)
+            img_bytes = pix.tobytes("png")
+            out_page.insert_image(target_rect, stream=img_bytes)
             page_idx += 1
 
     out_doc.save(output_path)
